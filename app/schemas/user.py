@@ -30,3 +30,7 @@ class UserResponse(UserBase):
 
     model_config = {"from_attributes": True}
 
+class TokenResponse(BaseModel):
+    access_token: str
+    token_type: str
+
