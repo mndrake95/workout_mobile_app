@@ -18,10 +18,10 @@ class UserLogin(BaseModel):
     password: str
 
     @model_validator(mode="after")
-    def check_identifier(cls, values):
-        if not (values.username or values.email):
+    def check_identifier(self):
+        if not (self.username or self.email):
             raise ValueError("Either username or email must be provided for login")
-        return values
+        return self
 
 
 class UserResponse(UserBase):
