@@ -93,3 +93,31 @@ async def test_login_nonexistent_user(client):
     login = await client.post("/users/login", json={"username": "username",
                                                     "password": "test_password"})
     assert login.status_code == 401
+
+# Сценарии получения профиля пользователя
+
+@pytest.mark.anyio
+async def test_get_user_profile_authenticated(client):
+    create = await client.post("/users/register", json={"username": "test_user", 
+                                                          "email": "test@example.com", 
+                                                          "password": "test_password"})
+    create_data = create.json()
+
+    login = await client.post("/users/login", json={"username": create_data["username"],
+                                                    "password": "test_password"})
+    login_data = login.json()
+
+    profile = await client.get("/users/profile", 
+                               headers={"Authorization": f"Bearer {login_data['access_token']}"})
+    profile_data = profile.json()
+
+    assert profile.status_code == 200
+    assert profile_data["username"] == "test_user"
+    assert profile_data["email"] == "test@example.com"
+
+@pytest.mark.anyio
+async def test_get_user_profile_unauthenticated(client):
+    profile = await client.get("/users/profile", 
+                               headers={"Authorization": f"Bearer"})
+
+    assert profile.status_code == 401
