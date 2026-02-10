@@ -121,3 +121,52 @@ async def test_get_user_profile_unauthenticated(client):
                                headers={"Authorization": f"Bearer"})
 
     assert profile.status_code == 401
+
+# Сценарии обновления профиля пользователя
+
+@pytest.mark.anyio
+async def test_patch_user_profile_username_and_email(client):
+    create = await client.post("/users/register", json={"username": "test_user", 
+                                                          "email": "test@example.com", 
+                                                          "password": "test_password"})
+    create_data = create.json()
+
+    login = await client.post("/users/login", json={"username": create_data["username"],
+                                                    "password": "test_password"})
+    login_data = login.json()
+
+    updated_profile = await client.patch("/users/profile",
+                                         headers={"Authorization": f"Bearer {login_data['access_token']}"},
+                                         json={"username": "test_user_patch",
+                                               "email": "testpatch@example.com"})
+    updated_profile_data = updated_profile.json()
+    assert updated_profile_data["username"] == "test_user_patch"
+    assert updated_profile_data["email"] == "testpatch@example.com"
+    assert updated_profile.status_code == 200
+
+@pytest.mark.anyio
+async def test_patch_user_profile_password(client):
+    create = await client.post("/users/register", json={"username": "test_user", 
+                                                          "email": "test@example.com", 
+                                                          "password": "test_password"})
+    create_data = create.json()
+
+    login = await client.post("/users/login", json={"username": create_data["username"],
+                                                    "password": "test_password"})
+    login_data = login.json()
+
+    updated_profile = await client.patch("/users/profile",
+                                         headers={"Authorization": f"Bearer {login_data['access_token']}"},
+                                         json={"password": "test_password_patch"})
+
+    updated_login = await client.post("/users/login", json={"username": create_data["username"],
+                                                    "password": "test_password_patch"})
+    
+    assert updated_login.status_code == 200
+   
+@pytest.mark.anyio
+async def test_patch_user_profile_without_auth(client):
+    updated_profile = await client.patch("/users/profile",
+                                         headers={"Authorization": f"Bearer"},
+                                         json={})
+    assert updated_profile.status_code == 401

@@ -2,11 +2,11 @@ from fastapi import APIRouter, Depends, status, HTTPException
 from fastapi.security import OAuth2PasswordBearer
 from typing import Annotated
 from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy import select, or_
+from sqlalchemy import select, or_, update
 from app import config
 from app.models import user as user_models
 from app.schemas import user as user_schemas
-from app.database import get_db
+from app.database import get_db, engine
 from app.services.auth import create_access_token, verify_and_update_password, decode_and_validate_token, pwd_context
 
 router = APIRouter()
@@ -54,4 +54,27 @@ async def get_user_profile(token: Annotated[str, Depends(oauth2_scheme)], db: As
     user = result.scalar_one_or_none()
     if user is None: 
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid credentials")
+    return user
+
+@router.patch("/users/profile", tags=["users"], status_code = status.HTTP_200_OK, response_model = user_schemas.UserResponse)
+async def patch_user_profile(token: Annotated[str, Depends(oauth2_scheme)], updated_user: user_schemas.UserUpdate, db: AsyncSession = Depends(get_db),):
+    payload = decode_and_validate_token(token, config.settings.SECRET_KEY, [config.settings.ALGORITHM])
+    username = payload.get("sub")
+    if not username: 
+        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED)
+    query = select(user_models.User).where(user_models.User.username == username)
+    result = await db.execute(query)
+    user = result.scalar_one_or_none()
+    if user is None: 
+        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid credentials")
+    if updated_user.username is not None:
+        user.username = updated_user.username
+    if updated_user.email is not None:
+        user.email = updated_user.email
+    if updated_user.password is not None:
+        hashed_pw = pwd_context.hash(updated_user.password)
+        user.password_hash = hashed_pw
+    db.add(user)
+    await db.commit()
+    await db.refresh(user)
     return user

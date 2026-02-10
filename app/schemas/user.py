@@ -22,7 +22,11 @@ class UserLogin(BaseModel):
         if not (self.username or self.email):
             raise ValueError("Either username or email must be provided for login")
         return self
-
+    
+class UserUpdate(BaseModel):
+    username: Optional[str] = None
+    email: Optional[EmailStr] = None
+    password: Optional[str] = None
 
 class UserResponse(UserBase):
     id: int
