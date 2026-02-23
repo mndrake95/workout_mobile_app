@@ -9,9 +9,6 @@ from app.database import get_db
 from app.services.auth import decode_and_validate_token
 from jose import JWTError
 
-
-
-
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="token")
 optional_oauth2_scheme = OAuth2PasswordBearer(tokenUrl="token", auto_error=False)
 

@@ -1,6 +1,6 @@
 from pydantic import BaseModel
 from datetime import datetime
-from typing import Optional
+from typing import Optional, List
 
 class ExerciseBase(BaseModel):
     title: str
@@ -9,6 +9,7 @@ class ExerciseBase(BaseModel):
 
 class ExerciseCreate(ExerciseBase):
     pass    
+
 class ExerciseUpdate(BaseModel):
     title: Optional[str] = None
     type: Optional[str] = None
@@ -17,6 +18,12 @@ class ExerciseUpdate(BaseModel):
 class ExerciseResponse(ExerciseBase):
     id: int
     created_at: datetime
-    author: int
+    author: Optional[int]
 
     model_config = {'from_attributes': True}
+
+class ExerciseListResponse(BaseModel):
+    items: List[ExerciseResponse]
+    total: int
+    page: int
+    pages: int
