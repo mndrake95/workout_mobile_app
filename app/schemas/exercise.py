@@ -19,6 +19,7 @@ class ExerciseResponse(ExerciseBase):
     id: int
     created_at: datetime
     author: Optional[int]
+    is_mine: bool = False
 
     model_config = {'from_attributes': True}
 
